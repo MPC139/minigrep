@@ -1,4 +1,9 @@
-use std::{env, error::Error, fs::File, io::Read};
+use std::{
+    env,
+    error::Error,
+    fs::File,
+    io::{BufRead, BufReader},
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let path_file: &str;
@@ -14,35 +19,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     //dbg!(path_file, query);
 
-    let mut f = File::open(path_file)?;
     //The same of:
     // let mut f = match File::open(path_file) {
     // Ok(file) => file,         // If successful, extract the File
     // Err(e) => return Err(e.into()), // If failed, RETURN the error from the function NOW
     // };
-
+    let f = File::open(path_file)?;
+    let mut buffer = BufReader::new(f);
     let mut data = String::new();
 
-    f.read_to_string(&mut data)?;
+    loop {
+        data.clear();
+        let bytes = buffer.read_line(&mut data)?;
+        if bytes == 0 {
+            break;
+        }
 
-    //dbg!(&data);
-
-    let lines: Vec<&str> = data.split('\n').collect();
-    //dbg!(&lines);
-
-    let lines_match: Vec<_> = lines.iter().filter(|x| x.contains(query)).collect();
-    if let true = lines_match.is_empty() {
-        return Err("query not found".into());
+        if data.contains(query) {
+            let colored_line = data.replace(query, &format!("\x1b[31m{}\x1b[0m", query));
+            print!("{}", colored_line);
+        }
     }
-    //dbg!(&line_match);
 
-    let lines_match = lines_match
-        .into_iter()
-        .map(|x| x.replace(query, &format!("\x1b[31m{}\x1b[0m", query)));
-
-    //dbg!(&lines_match);
-    for line in lines_match {
-        println!("{}", line);
-    }
     Ok(())
 }

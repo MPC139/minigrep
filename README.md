@@ -32,6 +32,12 @@ Run our implementation with the same parameters:
 time ./target/release/minigrep "the" big.txt > /dev/null
 ```
 
+### 3. All-in-One Benchmark Command
+Run both consecutively to see the comparison immediately:
+```bash
+echo "--- SYSTEM GREP ---" && time grep "the" big.txt > /dev/null && echo -e "\n--- MINIGREP ---" && time ./target/release/minigrep "the" big.txt > /dev/null
+```
+
 ## Understanding Results
 
 The output will show three times:
