@@ -2,17 +2,17 @@ use std::{
     env,
     error::Error,
     fs::File,
-    io::{BufRead, BufReader},
+    io::{self, BufRead, BufReader, Write},
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
     let path_file: &str;
-    let query: &str;
+    let query;
 
     let args: Vec<String> = env::args().collect();
     //dbg!(&args);
     if let Some(3) = Some(args.iter().len()) {
-        query = &args[1];
+        query = args[1].as_bytes();
         path_file = &args[2];
     } else {
         return Err("Usage [query] [path_file]".into());
@@ -26,20 +26,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     // };
     let f = File::open(path_file)?;
     let mut buffer = BufReader::new(f);
-    let mut data = String::new();
+    let mut data: Vec<u8> = Vec::new();
+
+    let stdout = io::stdout();
+    let mut handle = stdout.lock();
 
     loop {
         data.clear();
-        let bytes = buffer.read_line(&mut data)?;
+        let bytes = buffer.read_until(b'\n', &mut data)?;
         if bytes == 0 {
             break;
         }
-
-        if data.contains(query) {
-            let colored_line = data.replace(query, &format!("\x1b[31m{}\x1b[0m", query));
-            print!("{}", colored_line);
+        for window in data.windows(query.len()) {
+            if window == query {
+                handle.write_all(&data)?;
+                break;
+            }
         }
     }
-
     Ok(())
 }
