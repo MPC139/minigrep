@@ -10,6 +10,31 @@ pub struct Config {
 }
 //'static: This is the lifetime. 'static is a special lifetime in Rust that means "this data is valid for the entire duration of the program."
 impl Config {
+    /// Builds a `Config` instance from an iterator of strings (typically command-line arguments).
+    ///
+    /// # Panics
+    ///
+    /// This function does not panic.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error string if:
+    /// * The query string is missing.
+    /// * The file path is missing.
+    ///
+    /// # Safety
+    ///
+    /// This function is safe to use and does not contain `unsafe` code.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use minigrep::Config;
+    /// let args = vec!["program_name".to_string(), "query".to_string(), "file.txt".to_string()];
+    /// let config = Config::build(args.into_iter()).unwrap();
+    /// assert_eq!(config.query, b"query");
+    /// assert_eq!(config.file_path, "file.txt");
+    /// ```
     pub fn build<T: Iterator<Item = String>>(mut args: T) -> Result<Config, &'static str> {
         args.next();
 
@@ -26,6 +51,36 @@ impl Config {
     }
 }
 
+/// Searches for a query string within a file and prints matching lines to standard output
+/// with the query highlighted in red.
+///
+/// # Panics
+///
+/// This function does not panic under normal conditions.
+///
+/// # Errors
+///
+/// Returns a `Box<dyn Error>` if:
+/// * The file cannot be read.
+/// * Standard output cannot be written to.
+///
+/// # Safety
+///
+/// This function is safe to use and handles I/O errors gracefully via the `Result` type.
+///
+/// # Examples
+///
+/// ```no_run
+/// use minigrep::{Config, mygrep};
+/// use std::fs::File;
+///
+/// let config = Config {
+///     query: b"search_term".to_vec(),
+///     file_path: "test.txt".to_string(),
+/// };
+/// let file = File::open(&config.file_path).unwrap();
+/// mygrep(&file, &config).unwrap();
+/// ```
 pub fn mygrep(f: &File, config: &Config) -> Result<(), Box<dyn Error>> {
     let mut buffer = BufReader::new(f);
     let mut data: Vec<u8> = Vec::new();
